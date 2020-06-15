@@ -1,11 +1,69 @@
-# Switchblade - a Neural Network for Hard 2D Tasks
+# Official _TensorFlow_ Implementation Of Switchblade model
 
-## Requirements:
+This repository contains the official _TensorFlow_ implementation of the following paper:
+
+>**Switchblade - a Neural Network for Hard 2D Tasks**
+>
+> by Emīls Ozoliņš, Kārlis Freivalds, Agris Šostaks
+>
+> [[arXiv]()]
+>
+>Abstract: _Convolutional neural networks have become the main tools for
+> processing two-dimensional data. They work well for images, yet convolutions
+> have a limited receptive field that prevents its applications to more
+> complex 2D tasks. We propose a new neural network model, named Switchblade,
+> that can efficiently exploit long-range dependencies in 2D data and
+> solve much more challenging tasks. It has close-to-optimal  O(n² log n) 
+>complexity for processing n×n data matrix. Besides the common image
+> classification and segmentation,  we consider a diverse set of algorithmic 
+>tasks on matrices and graphs. Switchblade can infer highly complex matrix 
+>squaring and graph triangle finding algorithms purely from input-output
+> examples. We show that our model is likewise suitable for logical 
+>reasoning tasks -- it attains perfect accuracy on Sudoku puzzle solving.
+> Additionally, we introduce a new dataset for predicting the checkmating
+> move in chess on which our model achieves 72.5% accuracy._
+
+## What is _Switchblade_?
+
+Switchblade is generalization of [Neural Shuffle-Exchange](https://github.com/LUMII-Syslab/shuffle-exchange) networks to two dimensions. 
+It is suitable for broad range of problems that can be represented as matrix. Switchblade model
+can induce O(n^2 log n) time complexity, where n is length of matrix side, algorithms and model long-range dependencies.
+
+Switchblade model consists of cascaded Quaternary Switch and Quaternary Shuffle layers, that forms
+Beneš blocks. Here model structure is represented:
+![](assets/switchblade_model.jpg)
+
+Quaternary Switch layer divides inpute elements into tuples of 4 and the applies
+Quaternary Switch Unit (QSU) to each tuple. QSU is a learnable
+4-to-4 function, derived from [Residual Switch Unit](https://github.com/LUMII-Syslab/RSE), and is given as:
+
+![](assets/qsu.png)
+
+The Quaternary Shuffle layer rearranges elements according to cyclic base-4 digit permutation.
+Quaternary Shuffle permutation can be interpreted as splitting matrix rows into two halves 
+(white and green) and interleaving the halves, then applying the same
+transformation to columns (white and red). 
+Example permuation on 4×4 matrix:
+![](assets/quaternary_shuffle.jpg)
+
+## Preview Of Results
+Evaluated on several problems.
+
+Algorithmic tasks on matrices:
+![](assets/algorithmic.jpg) 
+
+Sudoku puzzle:
+![](assets/sudoku.jpg)
+Chess dataset Mate-In-One:
+![](assets/chess.jpg)
+
+## Running experiments
+### Requirements
 * Python 3.6 or higher;
 * Nvidia T4 GPU or equivalent;
 * TensorFlow 1.15 (see `requirements.txt`).
 
-## Running experiments:
+### Training & Evaluation
 * set training directory `train_dir` in `config.py` file;
 * set data directory `data_dir` in `config.py` file;
 * select task by uncommenting task section in `config.py` file.
@@ -20,7 +78,7 @@ dataset = Transpose()
 and placed in `data_dir/cityscapes` (optional);
 * Sudoku data should be manually downloaded from [GitHub](https://github.com/Kyubyong/sudoku)
 and extracted in `data_dir/sudoku` (optional);
-* Mate-In-One data is available [here]()
+* Chess - Mate-In-One dataset and description is available in [wiki](https://github.com/LUMII-Syslab/Switchblade/wiki/Chess-Dataset---Mate-in-one-problems)
 and should be extracted in `data_dir/mateinone` (optional);
 
 * then run `python3 trainer.py --train --eval`. Checkpoints will be saved in `train_dir`;
@@ -29,9 +87,9 @@ will reuse this dataset;
 * to evaluated generalization on larger inputs add `--gen_test` when starting training. Generalization results will be available in `train_dir/gen_test.txt`;
 * you can restart training or evaluation from previous checkpoint using `--continue <checkpoint_dir>` flag.
 
-## Task description:
+## Task description
 
-### Algorithmic tasks on matrices:
+### Algorithmic tasks on matrices
 
 #### Matrix squaring (Squaring):
 Given binary matrix model is required to output its square (matrix multiplication with itself) modulo 2.
@@ -76,7 +134,7 @@ To chose this task, in `config.py` uncomment:
 # dataset = BitwiseXOR()
 ```
 
-### Algorithmic task on graphs:
+### Algorithmic task on graphs
 Graphs are represented as adjacency matrices.
 
 #### Connected Component Labeling (ComponentLabeling):
@@ -117,7 +175,7 @@ dataset = Transitivity()
 adjust_class_imbalance = True
 ```
 
-### Image tasks:
+### Image tasks
 
 #### CIFAR-10 image classification:
 CIFAR-10 is a conventional image classification task that consists of 50000
@@ -170,6 +228,7 @@ train_steps = 1000000
 
 #### Mate-in-one chess dataset (MateInOne)
 Given chess board where mate move is possible, model is required to return mating move.
+Dataset and its description is availabel in our [wiki page](https://github.com/LUMII-Syslab/Switchblade/wiki/Chess-Dataset---Mate-in-one-problems).
 Data preparation for this task is given in `data/mateinone.py` file.
 
 To choose this task, in `config.py` uncomment:
