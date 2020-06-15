@@ -74,7 +74,7 @@ See guide on running experiments in the [wiki](https://github.com/LUMII-Syslab/S
 
 ## Citing _Switcblade_
 
-If you use _Switchblade_, please use the following _BibTeX_ entry:
+If you use _Switchblade_ or any of our datasets, please use the following _BibTeX_ entry:
 ```
 @missing
 ```
