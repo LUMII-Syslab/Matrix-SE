@@ -31,6 +31,7 @@ can induce O(n^2 log n) time complexity, where n is length of matrix side, algor
 
 Switchblade model consists of cascaded Quaternary Switch and Quaternary Shuffle layers, that forms
 Beneš blocks. Here model structure is represented:
+
 ![](assets/switchblade_model.jpg)
 
 Quaternary Switch layer divides inpute elements into tuples of 4 and the applies
@@ -44,17 +45,22 @@ Quaternary Shuffle permutation can be interpreted as splitting matrix rows into 
 (white and green) and interleaving the halves, then applying the same
 transformation to columns (white and red). 
 Example permuation on 4×4 matrix:
+
 ![](assets/quaternary_shuffle.jpg)
 
 ## Preview Of Results
 Evaluated on several problems.
 
 Algorithmic tasks on matrices:
+
 ![](assets/algorithmic.jpg) 
 
 Sudoku puzzle:
+
 ![](assets/sudoku.jpg)
+
 Chess dataset Mate-In-One:
+
 ![](assets/chess.jpg)
 
 ## Running experiments
