@@ -1,4 +1,4 @@
-# Official _TensorFlow_ Implementation Of Switchblade model
+# Official _TensorFlow_ implementation of Switchblade model
 
 This repository contains the official _TensorFlow_ implementation of the following paper:
 
@@ -53,13 +53,16 @@ Evaluated on several problems.
 
 Algorithmic tasks on matrices:
 
+
 ![](assets/algorithmic.jpg) 
 
 Sudoku puzzle:
 
+
 ![](assets/sudoku.jpg)
 
 Chess dataset Mate-In-One:
+
 
 ![](assets/chess.jpg)
 
@@ -73,13 +76,7 @@ Chess dataset Mate-In-One:
 * set training directory `train_dir` in `config.py` file;
 * set data directory `data_dir` in `config.py` file;
 * select task by uncommenting task section in `config.py` file.
-Matrix transpose task is selected by default. Matrix transpose tasks in `config.py`
-is represented as: 
-```python3
-""" Recommended settings for Matrix Transpose task """
-model = Switchblade(feature_maps=96, block_count=2)
-dataset = Transpose()
-```
+Matrix transpose task is selected by default.
 * CityScapes datas should be manually downloaded from [CityScapes site](https://www.cityscapes-dataset.com)
 and placed in `data_dir/cityscapes` (optional);
 * Sudoku data should be manually downloaded from [GitHub](https://github.com/Kyubyong/sudoku)
@@ -93,9 +90,7 @@ will reuse this dataset;
 * to evaluated generalization on larger inputs add `--gen_test` when starting training. Generalization results will be available in `train_dir/gen_test.txt`;
 * you can restart training or evaluation from previous checkpoint using `--continue <checkpoint_dir>` flag.
 
-## Task description
-
-### Algorithmic tasks on matrices
+### Task selection
 
 #### Matrix squaring (Squaring):
 Given binary matrix model is required to output its square (matrix multiplication with itself) modulo 2.
@@ -140,9 +135,6 @@ To chose this task, in `config.py` uncomment:
 # dataset = BitwiseXOR()
 ```
 
-### Algorithmic task on graphs
-Graphs are represented as adjacency matrices.
-
 #### Connected Component Labeling (ComponentLabeling):
 We initialize a labeled graph with random edge labels in range 2-100. 
 The task is to label all edges of each connected component with the lowest label among all the component’s edges.
@@ -181,8 +173,6 @@ dataset = Transitivity()
 adjust_class_imbalance = True
 ```
 
-### Image tasks
-
 #### CIFAR-10 image classification:
 CIFAR-10 is a conventional image classification task that consists of 50000
 train and 10000 test 32×32 images in 10 mutually exclusive classes.
@@ -216,8 +206,6 @@ reduce_void_weight = True
 mixed_precision_training = False
 ```
 
-### Puzzles & Games
-
 #### Sudoku puzzle solving (Sudoku)
 Given empty Sudoku puzzle, model is required to give solution in one step.
 Data preparation for this task is given in `data/sudoku.py` file.
@@ -244,4 +232,3 @@ model = Switchblade(feature_maps=192, block_count=2)
 dataset = MateInOne()
 chess = True
 ```
-
