@@ -49,20 +49,21 @@ Example permuation on 4×4 matrix:
 ![](assets/quaternary_shuffle.jpg)
 
 ## Preview Of Results
-Evaluated on several problems.
+We evaluate the Switchblade model on several 2D tasks. For image tasks, we chose two widely used benchmarks: CIFAR-10 image classification and CityScapes semantic segmentation. But our main emphasis is on hard, previously unsolved tasks: algorithmic tasks on matrices and graphs and logical reasoning tasks -- solving Sudoku puzzle and predicting the mating move in chess. All tasks was trained and evaluated on one Nvidia T4 GPU card using softmax cross-entropy loss.
 
-Algorithmic tasks on matrices:
+### Algorithmic tasks on matrices:
+We create new datasets for 2D algorithmic tasks, that is tasks where input/output data can be represented as matrix.
+For matrix tasks, we chose transpose of a matrix (_Transpose_), matrix rotation by 90 degrees (_Rotate90_), elementwise XOR of two matrices (_Bitwise XOR_) and matrix multiplication by itself (_Matrix Squaring_). For graph tasks, we chose transitive path finding (_Transitivity_), connected component labaling (_Component Labeling_) and triangle labaling in the graph (_Triangle Finding_). In all graph tasks, graphs are represented as adjacency matrices. Dataset generators for all tasks are available in [data folder](data/).
 
-
+We train Switchblade model on up to inputs of size 32×32 and evaluated generalization on up to size 1024×1024. Generalizatio results of Switchblade model on algorithmic tasks:
 ![](assets/algorithmic.jpg) 
 
-Sudoku puzzle:
+###  Sudoku puzzle:
 
 
 ![](assets/sudoku.jpg)
 
-Chess dataset Mate-In-One:
-
+### Mate-In-One chess dataset:
 
 ![](assets/chess.jpg)
 
