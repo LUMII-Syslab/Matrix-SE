@@ -6,7 +6,7 @@ This repository contains the official _TensorFlow_ implementation of the followi
 >
 > by Emīls Ozoliņš, Kārlis Freivalds, Agris Šostaks
 >
-> [[arXiv]()]
+> [[arXiv](https://arxiv.org/abs/2006.15892)]
 >
 >Abstract: _Convolutional neural networks have become the main tools for
 > processing two-dimensional data. They work well for images, yet convolutions
@@ -76,7 +76,14 @@ See guide on running experiments in the [wiki](https://github.com/LUMII-Syslab/S
 
 If you use _Switchblade_ or any of our datasets, please use the following _BibTeX_ entry:
 ```
-@missing
+@misc{ozoli2020switchblade,
+    title={Switchblade - a Neural Network for Hard 2D Tasks},
+    author={Emīls Ozoliņš and Kārlis Freivalds and Agris Šostaks},
+    year={2020},
+    eprint={2006.15892},
+    archivePrefix={arXiv},
+    primaryClass={cs.LG}
+}
 ```
 
 ## Contact information
