@@ -6,7 +6,7 @@ This repository contains the official _TensorFlow_ implementation of the followi
 >
 > by Emīls Ozoliņš, Kārlis Freivalds, Agris Šostaks
 >
-> [[arXiv]()]
+> [[arXiv](https://arxiv.org/abs/2006.15892)]
 >
 >Abstract: _Convolutional neural networks have become the main tools for processing two-dimensional data.
 > They work well for images, yet convolutions have a limited receptive field that prevents its applications 
