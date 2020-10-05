@@ -23,7 +23,7 @@ This repository contains the official _TensorFlow_ implementation of the followi
 ## What is Matrix Shuffle-Exchange networks?
 
 Matrix Shuffle-Exchange networks (Matrix-SE) are the generalization of [Neural Shuffle-Exchange](https://github.com/LUMII-Syslab/shuffle-exchange) networks to two dimensions. 
-It is suitable for a broad range of problems that can be represented as a matrix and can induce O(n² log n) time complexity algorithms, for n×n input matrix side.
+It is suitable for a broad range of problems that can be represented as a matrix and it has O(n² log n) time and space complexity, for n×n input matrix side.
 
 The Matrix-SE model consists of cascaded Quaternary Switch and Quaternary Shuffle layers that form Beneš blocks. 
 Additionally, Beneš blocks are enclosed by Z-Order flatten and unflatten transformations. Matrix-SE model of 2 Beneš blocks:
@@ -44,7 +44,7 @@ Example of permutation implemented by Quaternary Shuffle layer on 4×4 matrix:
 ## Preview of results
 We evaluate the Matrix-SE model on several 2D tasks.
 Our main emphasis is on hard, previously unsolved tasks: algorithmic tasks on matrices and graphs and logical reasoning 
-task - solving Sudoku puzzles. All tasks were trained and evaluated on one Nvidia T4 GPU card using softmax cross-entropy loss.
+task - solving Sudoku puzzles. All tasks were trained and evaluated on one Nvidia RTX 2080Ti (11Gb) GPU card using softmax cross-entropy loss.
 
 ### Algorithmic tasks on matrices:
 We propose new datasets for 2D algorithmic tasks, where input/output data can be represented as a matrix. 
@@ -54,15 +54,14 @@ For graph tasks, we chose transitive path finding (_Transitivity_), connected co
 and triangle labeling in the graph (_Triangle Finding_), and represent graphs as an adjacency matrix. 
 Dataset generators for algorithmic tasks are available in [data folder](https://github.com/LUMII-Syslab/Matrix-SE/tree/master/data).
 
-We train the Matrix-SE model on input matrices up to size 32×32 and evaluated generalization on up to size 1024×1024. 
-Matrix Shuffle-Exchange results for algorithmic tasks on matrices compared with ResNet:
+We train the Matrix-SE model on input matrices up to size 32×32 and evaluate generalization on up to size 1024×1024. 
+Matrix Shuffle-Exchange results for algorithmic tasks on matrices in comparison with ResNet:
 ![](assets/matrices_results.png)
 
 ###  Sudoku puzzle:
 The Matrix-SE model is evaluated on the [Sudoku](https://en.wikipedia.org/wiki/Sudoku) puzzle-solving task. 
 Our model achieves 96.6\% accuracy of on the hard Sudoku (17 givens)
 and 100% on easy Sudoku puzzles (24-36 givens). The accuracy represents the fraction of completely correctly solved test puzzles.
-
 Sudoku puzzle with 17 given clues from the test set and its solution obtained by the Matrix Shuffle-Exchange network: 
 ![](assets/sudoku.png)
 
