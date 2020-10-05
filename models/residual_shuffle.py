@@ -1,21 +1,18 @@
 import tensorflow as tf
 from tensorflow.keras.layers import Embedding
 
-from layers.shuffle import LinearTransform, BenesBlock
+from layers.RSE_network import ResidualShuffleExchange2D
+from layers.shuffle import ConvLinear
 from models.base import Model
 
 
-class Switchblade(Model):
-    """
-    Model for 2D algorithmic tasks (graphs and matrices), sudoku and chess.
-    Switchblade is generalization of Neural Shuffle-Exchange
-    (https://papers.nips.cc/paper/8889-neural-shuffle-exchange-networks-sequence-processing-in-on-log-n-time)
-    network to two dimensions.
-    """
+class ResidualShuffle(Model):
 
     def __init__(self, feature_maps, block_count) -> None:
-        self.feature_maps = feature_maps
-        self.block_count = block_count
+        self.__config = {
+            "num_units": feature_maps,
+            "block_count": block_count
+        }
 
         self.benes_block = None
         self.embedding = None
@@ -26,12 +23,12 @@ class Switchblade(Model):
         return self.__config
 
     def build(self, input_classes, output_classes):
-        self.embedding = Embedding(input_classes, output_dim=self.feature_maps,
+        self.embedding = Embedding(input_classes, output_dim=self.config["num_units"],
                                    embeddings_initializer=tf.truncated_normal_initializer(stddev=0.25))
 
-        self.benes_block = BenesBlock(self.block_count, self.feature_maps)
+        self.benes_block = ResidualShuffleExchange2D(self.config["block_count"], self.config["num_units"])
 
-        self.output_layer = LinearTransform("output", output_classes)
+        self.output_layer = ConvLinear("output", 1, output_classes)
 
     def call(self, inputs, training=False):
         embedding = self.embedding(inputs)

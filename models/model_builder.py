@@ -11,60 +11,6 @@ from optimization.radam import RAdamOptimizer
 from utils.log_memory import show_layer_outputs
 
 
-def colorize(value: tf.Tensor, colors: tf.Tensor):
-    """ Convert IDs to color image """
-    dim = value.shape.as_list()
-    value = tf.reshape(value, [dim[0], dim[1] * dim[2], 1])
-    value = tf.gather(colors, value)
-
-    value = tf.cast(value, dtype=tf.uint8)
-    value = tf.reshape(value, [dim[0], dim[1], dim[2], 3])
-    return value
-
-
-def color_map():
-    return tf.constant([
-        [0, 0, 0],
-        [128, 64, 128],
-        [244, 35, 232],
-        [70, 70, 70],
-        [102, 102, 156],
-        [190, 153, 153],
-        [153, 153, 153],
-        [250, 170, 30],
-        [220, 220, 0],
-        [107, 142, 35],
-        [152, 251, 152],
-        [70, 130, 180],
-        [220, 20, 60],
-        [255, 0, 0],
-        [0, 0, 142],
-        [0, 0, 70],
-        [0, 60, 100],
-        [0, 80, 100],
-        [0, 0, 230],
-        [119, 11, 32],
-    ])
-
-
-def chess_color_map():
-    return tf.constant([
-        [0, 0, 0],  # Empty space
-        [153, 255, 153],  # Q green
-        [153, 153, 255],  # R blue
-        [255, 153, 255],  # B purple
-        [255, 255, 153],  # N yellow
-        [255, 255, 255],  # P white
-        [204, 0, 0],  # k red
-        [0, 204, 0],  # q green
-        [0, 0, 204],  # r blue
-        [153, 0, 153],  # b purple
-        [153, 153, 0],  # n yellow
-        [160, 160, 160],  # p gray
-        [255, 153, 153]  # K red
-    ])
-
-
 def get_accuracy(prediction, label):
     correct_symbols = tf.equal(prediction, label)
     mask_y_in = tf.cast(tf.not_equal(label, 0), tf.float32)
@@ -88,9 +34,8 @@ def get_all_correct(prediction, label):
 
 
 class AverageLoggingHook(tf.estimator.SessionRunHook):
-    """ Calculates average value over steps"""
 
-    def __init__(self, tensors: dict, file_name=None):
+    def __init__(self, tensors: dict, file_name: Path = None):
         """
         :param tensors: dictionary with tensors for logging
         :param file_name: File to log values
@@ -114,11 +59,10 @@ class AverageLoggingHook(tf.estimator.SessionRunHook):
 
     def end(self, session):
         if self._file_name:
-            with open(self._file_name, "a+") as file:
+            with self._file_name.open("a+") as file:
                 self.__log(file.write)
-                self.__log(print)
-        else:
-            self.__log(print)
+
+        self.__log(print)
 
     def __log(self, output_stream):
         for key, value in self._total_value.items():
@@ -126,9 +70,7 @@ class AverageLoggingHook(tf.estimator.SessionRunHook):
 
 
 class ModelAssembler:
-    """
-    Initiates model for each input size in datasets. All models share the same weights.
-    """
+
     def __init__(self, model: Model, dataset: Dataset) -> None:
         self.model = model
         self.dataset = dataset
@@ -142,63 +84,22 @@ class ModelAssembler:
         total_loss = 0.0
         length_predictions = []
 
-        # colors = color_map()
         log_dict = {}
 
         for inputs, targets in zip(features, labels):
             length = inputs.shape.as_list()[1]
-            logits = self.model.call(inputs, training=training)
+            logits_all = self.model.call(inputs, training=training)
+            logits_all = logits_all if isinstance(logits_all, list) else [logits_all]
 
-            predictions = {
-                'classes': tf.argmax(input=logits, axis=-1, output_type=tf.int32),
-                'probabilities': tf.nn.softmax(logits, name='softmax_tensor')
-            }
+            for logits in logits_all:
+                predictions = {
+                    'classes': tf.argmax(input=logits, axis=-1, output_type=tf.int32),
+                    'probabilities': tf.nn.softmax(logits, name='softmax_tensor')
+                }
 
-            if config.chess:
-                # flatten
-                logits = tf.reshape(logits, [logits.shape[0], -1])
-                # dense 64x64
-                logits = tf.keras.layers.Dense(units=64 * 64)(logits)
-                new_targets = tf.reshape(targets, [targets.shape[0], 64])
-                new_targets = tf.one_hot(new_targets, depth=3, dtype=tf.int32)
-                new_targets = tf.argmax(new_targets, axis=1)
-                new_targets = tf.gather(new_targets, [1, 2], axis=1)
-                new_targets = tf.reduce_sum(new_targets * [64, 1], axis=1)
-                output_classes = 64 * 64
-                loss = self.calculate_loss_with_smoothing(new_targets, logits, output_classes,
-                                                          config.adjust_class_imbalance)
-            else:
-                loss = self.calculate_loss_with_smoothing(targets, logits, output_classes,
-                                                          config.adjust_class_imbalance)
-
-            if config.use_jaccard_loss:
-                jac = self.jaccard_distance(targets, predictions["probabilities"], output_classes)
-                tf.compat.v1.summary.scalar(f"jaccard_loss_{length}", loss, family="loss")
-                loss += jac
-
-            # flooding_level = 0.001
-            # loss = tf.math.abs(loss - flooding_level) + flooding_level
-
-            total_loss += loss
-
-            tf.compat.v1.summary.scalar(f"loss_{length}", loss, family="loss")
-
-            if config.chess:
-                predicted_classes = tf.nn.softmax(logits)
-                predicted_classes = tf.argmax(predicted_classes, axis=1)
-                div_tensor = tf.floor_div(predicted_classes, [64])
-                mod_tensor = tf.floormod(predicted_classes, [64])
-                predicted_classes = tf.stack([div_tensor, mod_tensor], axis=1)
-                predicted_classes = tf.one_hot(predicted_classes, depth=64, dtype=tf.int32) * tf.stack(
-                    [tf.fill([64], 1), tf.fill([64], 2)])
-                predicted_classes = tf.reshape(tf.reduce_sum(predicted_classes, axis=1), [logits.shape[0], 8, 8])
-                predictions["classes"] = predicted_classes
-                image1 = colorize(inputs, chess_color_map())
-                tf.compat.v1.summary.image("inputs", image1, max_outputs=3, family="inputs")
-                image2 = colorize(targets, chess_color_map())
-                tf.compat.v1.summary.image("labels", image2, max_outputs=3, family="labels")
-                image3 = colorize(predictions["classes"], chess_color_map())
-                tf.compat.v1.summary.image("predictions", image3, max_outputs=3, family="predictions")
+                loss = self.calculate_loss_with_smoothing(targets, logits, output_classes,config.adjust_class_imbalance)
+                total_loss += loss
+                tf.compat.v1.summary.scalar(f"loss_{length}", loss, family="loss")
 
             log_dict[f"accuracy_{length}x{length}"] = get_accuracy(predictions["classes"], targets)
             tf.compat.v1.summary.scalar(f"{length}x{length}", log_dict[f"accuracy_{length}x{length}"],
@@ -207,30 +108,6 @@ class ModelAssembler:
             log_dict[f"total_accuracy_{length}x{length}"] = get_all_correct(predictions["classes"], targets)
             tf.compat.v1.summary.scalar(f"total{length}x{length}", log_dict[f"total_accuracy_{length}x{length}"],
                                         family="accuracy")
-
-            if config.log_input_image:
-                input_shape = inputs.get_shape().as_list()
-                tf.compat.v1.summary.image("features_" + str(input_shape[1]), inputs, max_outputs=8)
-
-            if config.log_segmentation_output:
-                color_label = colorize(targets, color_map())
-                tf.compat.v1.summary.image("labels_" + str(input_shape[1]), color_label, max_outputs=8)
-
-                pred = colorize(predictions["classes"], color_map())
-                tf.compat.v1.summary.image("predictions_" + str(input_shape[1]), pred, max_outputs=8)
-
-                class_id_to_group = tf.constant([0, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 5, 6, 6, 7, 7, 7, 7, 7, 7])
-                group_targets = tf.gather(class_id_to_group, targets)
-                group_pred = tf.gather(class_id_to_group, predictions["classes"])
-
-                class_iou, class_iou_update = tf.metrics.mean_iou(targets, predictions["classes"], output_classes)
-                group_iou, group_iou_update = tf.metrics.mean_iou(group_targets, group_pred, output_classes)
-
-                with tf.control_dependencies([class_iou_update, group_iou_update]):
-                    class_iou = tf.identity(class_iou)
-                    group_iou = tf.identity(group_iou)
-                    tf.compat.v1.summary.scalar(f"IoU_class_{length}", class_iou, family="accuracy")
-                    tf.compat.v1.summary.scalar(f"IoU_group_{length}", group_iou, family="accuracy")
 
             length_predictions.append((targets, predictions["classes"]))
 
@@ -242,23 +119,13 @@ class ModelAssembler:
             tf.compat.v1.summary.histogram(name + '/histogram', var)
 
         gen_file = Path(config.model_dir) / config.gen_test_file
-        return total_loss, length_predictions, AverageLoggingHook(log_dict, file_name=gen_file)
+        return total_loss, length_predictions, AverageLoggingHook(log_dict, file_name=gen_file), predictions["classes"]
 
     @staticmethod
     def calculate_loss(labels, logits, output_classes):
         labels_one_hot = tf.one_hot(labels, output_classes)
         loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels=labels_one_hot, logits=logits)
         return tf.reduce_mean(loss)
-
-    @staticmethod
-    def jaccard_distance(y_true, y_pred, output_classes, smooth=1e-10):
-        """ Calculatete Jaccard distance (https://en.wikipedia.org/wiki/Jaccard_index)"""
-        y_true = tf.one_hot(y_true, output_classes)
-
-        intersection = tf.reduce_sum(y_true * y_pred, axis=-1)
-        _sum = tf.reduce_sum(y_true + y_pred, axis=-1)
-        jac = (intersection + smooth) / (_sum - intersection + smooth)
-        return 1 - tf.reduce_mean(jac + smooth)
 
     def calculate_loss_with_smoothing(self, label, logits, output_classes, adjust_for_class_imbalance=False):
         confidence = 1 - config.label_smoothing
@@ -302,6 +169,17 @@ class ModelAssembler:
         info += f"\tTrainable parameters: {params}\n"
         params = np.sum([np.prod(v.shape) for v in tf.compat.v1.global_variables()])
         info += f"\tTotal variables: {params}\n"
+
+        if config.calculate_fcn_receptive_field:
+            import receptive_field as rf
+            graph = tf.get_default_graph().as_graph_def()
+            values = rf.compute_receptive_field_from_graph_def(graph, 'input_node', 'output_node')
+
+            rf_x, rf_y, eff_stride_x, eff_stride_y, eff_pad_x, eff_pad_y = values
+            info += f"\tReceptive field for FCN: {rf_x}x{rf_y}\n"
+            info += f"\tEffective stride for FCN: {eff_stride_x}x{eff_stride_y}\n"
+            info += f"\tEffective padding for FCN: {eff_pad_x}x{eff_pad_y}\n"
+
         info += ''.join(["-"] * len(header)) + "\n"
 
         tf.compat.v1.logging.info(info)
@@ -314,6 +192,52 @@ class ModelBuilder(metaclass=ABCMeta):
         pass
 
 
+def eval_metrics(accuracy_inputs):
+    metrics = {}
+
+    for labels, predictions in accuracy_inputs:
+        length = labels.shape.as_list()[-2]
+        name = f"accuracy_{length}"
+        metrics[name] = masked_accuracy(labels, predictions)
+        metrics[f"all_correct_{length}"] = masked_all_correct(labels, predictions)
+
+    return metrics
+
+
+def all_correct(labels, predictions, weights=None, metrics_collections=None, updates_collections=None, name=None):
+    predictions.get_shape().assert_is_compatible_with(labels.get_shape())
+
+    if labels.dtype != predictions.dtype:
+        predictions = tf.cast(predictions, labels.dtype)
+
+    is_correct = tf.cast(tf.equal(predictions, labels), tf.float32)
+    reduce_indices = tf.range(1, tf.rank(is_correct))  # keep only batch dimension
+    is_correct = tf.reduce_min(is_correct, axis=reduce_indices)
+    name = name or 'all_correct'
+
+    return tf.metrics.mean(is_correct, weights, metrics_collections, updates_collections, name)
+
+
+def masked_accuracy(labels, predictions):
+    mask_y_in = tf.not_equal(labels, 0)
+    mask_y_in = tf.to_int32(mask_y_in)
+    mask_out = tf.not_equal(predictions, 0)
+    mask_out = tf.to_int32(mask_out)
+    mask_pad = tf.maximum(mask_y_in, mask_out)
+
+    return tf.metrics.accuracy(labels, predictions, weights=mask_pad)
+
+
+def masked_all_correct(labels, predictions):
+    mask_y_in = tf.not_equal(labels, 0)
+    mask_y_in = tf.to_int32(mask_y_in)
+    mask_out = tf.not_equal(predictions, 0)
+    mask_out = tf.to_int32(mask_out)
+    mask_pad = tf.maximum(mask_y_in, mask_out)
+
+    return all_correct(labels, predictions, weights=mask_pad)
+
+
 def summary_hook(training_mode):
     output_dir = config.model_dir + "/" + training_mode
     return tf.estimator.SummarySaverHook(
@@ -321,6 +245,21 @@ def summary_hook(training_mode):
         output_dir=output_dir,
         summary_op=tf.compat.v1.summary.merge_all()
     )
+
+
+def log_config_in_tb(model_config: dict, dataset_config: dict):
+    general_config = [
+        ["Learning rate", str(config.learning_rate)],
+        ["Train batch size", str(config.train_batch_size)],
+        ["Eval batch size", str(config.eval_batch_size)]
+    ]
+    tf.compat.v1.summary.text("general_config", tf.constant(general_config))
+
+    model_config = [[key, str(val)] for key, val in model_config.items()]
+    tf.compat.v1.summary.text("model_config", tf.constant(model_config))
+
+    dataset_config = [[key, str(val)] for key, val in dataset_config.items()]
+    tf.compat.v1.summary.text("dataset_config", tf.constant(dataset_config))
 
 
 class GPUModelBuilder(ModelBuilder):
@@ -333,7 +272,11 @@ class GPUModelBuilder(ModelBuilder):
         def model_fn(features: tf.data.Dataset, labels: tf.data.Dataset, mode, params):
 
             is_training = mode == tf.estimator.ModeKeys.TRAIN
-            total_loss, length_predictions, avg_hook = self.assembler.assemble_model(features, labels, is_training)
+
+            if tf.estimator.ModeKeys.PREDICT == mode:
+                labels = features
+
+            total_loss, length_predictions, avg_hook, prediction = self.assembler.assemble_model(features, labels, is_training)
             self.assembler.log_model_info()
 
             show_layer_outputs()
@@ -342,14 +285,14 @@ class GPUModelBuilder(ModelBuilder):
                 tvars = list(tf.compat.v1.trainable_variables())
                 regvars = [var for var in tvars if "CvK" in var.name or "kernel" in var.name]
 
-                optimizer = RAdamOptimizer(config.learning_rate, L2_decay=config.L2_decay,
-                                           clip_gradients=True,
-                                           decay_vars=regvars)
+                optimizer = RAdamOptimizer(config.learning_rate, L2_decay=config.L2_decay, clip_gradients=True,
+                                           decay_vars=regvars, total_steps=config.train_steps)
 
                 if config.mixed_precision_training:
                     optimizer = tf.train.experimental.enable_mixed_precision_graph_rewrite(optimizer)
 
                 # Display gradients in TensorFlow
+
                 if config.log_gradients:
                     grads = optimizer.compute_gradients(total_loss)
                     for g in grads:
@@ -372,6 +315,13 @@ class GPUModelBuilder(ModelBuilder):
                     mode=tf.estimator.ModeKeys.EVAL,
                     loss=total_loss,
                     evaluation_hooks=[summary_hook("eval"), avg_hook] if config.enable_summary_hooks else []
+                )
+
+            if mode == tf.estimator.ModeKeys.PREDICT:
+                return tf.estimator.EstimatorSpec(
+                    mode=tf.estimator.ModeKeys.PREDICT,
+                    loss=total_loss,
+                    predictions=prediction
                 )
 
         return model_fn

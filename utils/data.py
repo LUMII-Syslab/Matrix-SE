@@ -4,9 +4,6 @@ import numpy as np
 
 
 def matrix_to_vector(matrix):
-    """
-    Converts matrix to vector according to Z-order-curve readout.
-    """
     w = len(matrix)
     h = len(matrix[0])
 
@@ -32,9 +29,6 @@ def __matrix_to_vector(matrix, length, x, y):
 
 
 def vector_to_matrix(vector):
-    """
-    Converts vector to matrix according to Z-order-curve readout.
-    """
     length = len(vector)
     assert math.log(length, 4).is_integer(), "Total vector element count should be power of 4"
     return __vector_to_matrix(vector, 0, length)
