@@ -28,7 +28,7 @@ class ResidualShuffle(Model):
 
         self.benes_block = ResidualShuffleExchange2D(self.config["block_count"], self.config["num_units"])
 
-        self.output_layer = LinearTransform("output", 1, output_classes)
+        self.output_layer = LinearTransform("output", output_classes)
 
     def call(self, inputs, training=False):
         embedding = self.embedding(inputs)

@@ -34,9 +34,9 @@ class MatrixSEMultistep(Model):
                                    embeddings_initializer=tf.truncated_normal_initializer(stddev=0.25))
 
         self.benes_block = BenesBlock(self.config["block_count"], self.config["num_units"])
-        self.gelu_layer = LinearTransform("relu_layer", 1, self.config["num_units"])
+        self.gelu_layer = LinearTransform("relu_layer", self.config["num_units"])
 
-        self.output_layer = LinearTransform("output", 1, output_classes)
+        self.output_layer = LinearTransform("output", output_classes)
 
     def call(self, inputs, training=False):
         embedding = self.embedding(inputs)

@@ -94,7 +94,7 @@ class BenesBlock(tf.keras.layers.Layer):
                 "reverse": QuaternarySwitchUnit("reverse", dropout_rate=0.1)
             }
 
-        self.output_layer = LinearTransform("output", 1, self.num_units)
+        self.output_layer = LinearTransform("output", self.num_units)
 
     def call(self, inputs, training=False, **kwargs):
         input_shape = inputs.get_shape().as_list()

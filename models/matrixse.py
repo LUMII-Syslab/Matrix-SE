@@ -34,7 +34,7 @@ class MatrixSE(Model):
 
         self.benes_block = BenesBlock(self.config["block_count"], self.config["num_units"])
 
-        self.output_layer = LinearTransform("output", 1, output_classes)
+        self.output_layer = LinearTransform("output", output_classes)
 
     def call(self, inputs, training=False):
         embedding = self.embedding(inputs)
