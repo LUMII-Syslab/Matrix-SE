@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow.keras.layers import Embedding
 
 from layers.quaternary_shuffle import BenesBlock
-from layers.shuffle import ConvLinear
+from layers.shuffle import LinearTransform
 from models.base import Model
 
 
@@ -34,7 +34,7 @@ class MatrixSE(Model):
 
         self.benes_block = BenesBlock(self.config["block_count"], self.config["num_units"])
 
-        self.output_layer = ConvLinear("output", 1, output_classes)
+        self.output_layer = LinearTransform("output", 1, output_classes)
 
     def call(self, inputs, training=False):
         embedding = self.embedding(inputs)
