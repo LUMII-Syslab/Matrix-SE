@@ -80,7 +80,14 @@ See guide on running experiments in the [wiki](https://github.com/LUMII-Syslab/M
 
 If you use _Matrix Shuffle-Exchange_ or any of our datasets, please use the following _BibTeX_ entry:
 ```
-_blank_
+@misc{ozoliņš2020matrix,
+      title={Matrix Shuffle-Exchange Networks for Hard 2D Tasks}, 
+      author={Emīls Ozoliņš and Kārlis Freivalds and Agris Šostaks},
+      year={2020},
+      eprint={2006.15892},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG}
+}
 ```
 
 ## Contact information
