@@ -1,8 +1,10 @@
 import random
 from abc import abstractmethod, ABC
+from copy import deepcopy
 
 import networkx as nx
 import numpy as np
+from matplotlib import pylab as plt
 
 
 class Graph(ABC):
@@ -40,21 +42,24 @@ class Graph(ABC):
 
                 feature_graph = self.set_weights(feature_graph)
 
-                # pos = nx.spring_layout(feature_graph, scale=3)
-                # nx.draw_networkx(feature_graph, pos)
-                # labels = nx.get_edge_attributes(feature_graph, 'weight')
-                # nx.draw_networkx_edge_labels(feature_graph, pos, labels)
-                # plt.show()
-
                 feature_graph, label_graph = self.label_fn(feature_graph)
 
-                # pos = nx.spring_layout(label_graph, scale=3)
-                # nx.draw_networkx(label_graph, pos)
-                # labels = nx.get_edge_attributes(label_graph, 'weight')
+                feature_graph = feature_graph.to_directed()
+                label_graph = label_graph.to_directed()
+
+                # k = len(feature_graph.nodes) / np.sqrt(len(feature_graph.nodes))
+                # pos = nx.spring_layout(feature_graph, k=k, scale=3)
+                # nx.draw_networkx(feature_graph, pos=pos, with_labels=True)
+                # labels = nx.get_edge_attributes(feature_graph, 'feature')
+                # nx.draw_networkx_edge_labels(feature_graph, pos, labels)
+                # plt.show()
+                #
+                # nx.draw_networkx(label_graph, pos=pos, with_labels=True)
+                # labels = nx.get_edge_attributes(label_graph, 'label')
                 # nx.draw_networkx_edge_labels(label_graph, pos, labels)
                 # plt.show()
 
-                yield feature_graph.to_directed(), label_graph.to_directed()
+                yield feature_graph, label_graph
 
         return _generator
 
@@ -78,16 +83,16 @@ class TriangleFinding(Graph):
 
     def label_fn(self, feature: nx.Graph):
 
-        label = feature.copy()
-        nx.set_edge_attributes(feature, 0, "feature")
+        label = deepcopy(feature)
+        nx.set_edge_attributes(feature, 0, 'feature')
+        nx.set_edge_attributes(label, 0, 'label')
 
         for e in label.edges:
             v1_neighbor_set = set(label.neighbors(e[0]))
             for v2 in label.neighbors(e[1]):
                 if v2 in v1_neighbor_set:
                     label[e[0]][e[1]]['label'] = 1
-                else:
-                    label[e[0]][e[1]]['label'] = 0
+                    break
 
         return feature, label
 
